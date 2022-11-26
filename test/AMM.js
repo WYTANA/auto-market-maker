@@ -8,7 +8,7 @@ const tokens = (n) => {
 const ether = tokens
 
 describe("AMM", () => {
-  let accounts, deployer, liquidityProvider
+  let accounts, deployer, liquidityProvider, investor1, investor2
   let token1, token2, amm
 
   beforeEach(async () => {
@@ -16,11 +16,13 @@ describe("AMM", () => {
     accounts = await ethers.getSigners()
     deployer = accounts[0]
     liquidityProvider = accounts[1]
+    investor1 = accounts[2]
+    investor2 = accounts[3]
 
     // Deploy tokens
     const Token = await ethers.getContractFactory("Token")
-    token1 = await Token.deploy(" TLO AMM Token", "AMM", "1000000")
-    token2 = await Token.deploy("fUSD Token", "fUSD", "1000000")
+    token1 = await Token.deploy(" TLO AMM Token", "AMM", "1000000") // One million
+    token2 = await Token.deploy("fUSD Token", "fUSD", "1000000") // One million
 
     // Send tokens to LP
     let transaction = await token1
@@ -31,6 +33,18 @@ describe("AMM", () => {
     transaction = await token2
       .connect(deployer)
       .transfer(liquidityProvider.address, tokens(100000))
+    await transaction.wait()
+
+    // Send token1 to investor1
+    transaction = await token1
+      .connect(deployer)
+      .transfer(investor1.address, tokens(100000))
+    await transaction.wait()
+
+    // Send token2 to investor2
+    transaction = await token2
+      .connect(deployer)
+      .transfer(investor2.address, tokens(100000))
     await transaction.wait()
 
     // Deploy AMM
@@ -111,7 +125,7 @@ describe("AMM", () => {
       // Verify deployer still has 100 shares
       expect(await amm.shares(deployer.address)).to.equal(tokens(100))
 
-      // Verify pool shares outstanding is 150
+      // Verify pool shares outstanding are 150
       expect(await amm.totalShares()).to.equal(tokens(150))
 
       //
