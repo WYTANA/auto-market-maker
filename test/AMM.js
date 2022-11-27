@@ -67,7 +67,7 @@ describe("AMM", () => {
   })
 
   describe("Token swaps", () => {
-    let amount, transaction, result
+    let amount, transaction, result, balance, estimate
 
     it("have been facilitated", async () => {
       // Deployer approves 100k tokens
@@ -128,7 +128,67 @@ describe("AMM", () => {
       // Verify pool shares outstanding are 150
       expect(await amm.totalShares()).to.equal(tokens(150))
 
-      //
+      //////////////////////////////////////////////////
+      // Investor1 Swaps
+
+      // Investor 1 approves all tokens
+      transaction = await token1
+        .connect(investor1)
+        .approve(amm.address, tokens(100000))
+      await transaction.wait()
+
+      // Check investor1 token2 balance pre-swap
+      balance = await token2.balanceOf(investor1.address)
+      console.log(
+        `\nInvestor1 token2 balance PRE-swap: ${ethers.utils.formatEther(
+          balance
+        )}\n`
+      )
+
+      // Estimate amount of tokens investor1 receives after swap - including slippage
+      estimate = await amm.calculateToken1Swap(tokens(1))
+      console.log(
+        `Token2 amount Investor1 will receive post-swap: ${estimate}\n`
+      )
+
+      // Investor1 swaps (1) token1
+      transaction = await amm.connect(investor1).swapToken1(tokens(1))
+      await transaction.wait()
+
+      // Check swap event
+      await expect(transaction)
+        .to.emit(amm, "Swap")
+        .withArgs(
+          investor1.address,
+          token1.address,
+          tokens(1),
+          token2.address,
+          estimate,
+          await amm.token1Balance(),
+          await amm.token2Balance(),
+          (
+            await ethers.provider.getBlock(
+              await ethers.provider.getBlockNumber()
+            )
+          ).timestamp
+        )
+
+      // Check investor1 balance post-swap
+      balance = await token2.balanceOf(investor1.address)
+      console.log(
+        `\nInvestor1 token2 balance POST-swap: ${ethers.utils.formatEther(
+          balance
+        )}\n`
+      )
+      expect(estimate).to.equal(balance)
+
+      // Check that AMM balances are in sync
+      expect(await token1.balanceOf(amm.address)).to.equal(
+        await amm.token1Balance()
+      )
+      expect(await token2.balanceOf(amm.address)).to.equal(
+        await amm.token2Balance()
+      )
     })
   })
 })

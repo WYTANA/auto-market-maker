@@ -21,6 +21,17 @@ contract AMM {
     mapping(address => uint256) public shares;
     uint256 constant PRECISION = 10 ** 18;
 
+    event Swap(
+        address user,
+        address tokenGive,
+        uint256 tokenGiveAmount,
+        address tokenGet,
+        uint256 tokenGetAmount,
+        uint256 token1Balance,
+        uint256 token2Balance,
+        uint256 timestamp
+    );
+
     constructor(Token _token1, Token _token2) {
         token1 = _token1;
         token2 = _token2;
@@ -121,5 +132,15 @@ contract AMM {
         token2.transfer(msg.sender, token2Amount);
 
         // Emit event
+        emit Swap(
+            msg.sender,
+            address(token1),
+            _token1Amount,
+            address(token2),
+            token2Amount,
+            token1Balance,
+            token2Balance,
+            block.timestamp
+        );
     }
 }
