@@ -16,8 +16,8 @@ describe("AMM", () => {
     accounts = await ethers.getSigners()
     deployer = accounts[0]
     liquidityProvider = accounts[1]
-    investor1 = accounts[2]
-    investor2 = accounts[3]
+    investor1 = accounts[2] // swaps token1 for token2
+    investor2 = accounts[3] // swaps token2 for token1
 
     // Deploy tokens
     const Token = await ethers.getContractFactory("Token")
@@ -131,6 +131,13 @@ describe("AMM", () => {
       //////////////////////////////////////////////////
       // Investor1 Swaps
 
+      // Check price before swap
+      console.log(
+        `\nTLO Price: ${
+          (await amm.token2Balance()) / (await amm.token1Balance())
+        }\n`
+      )
+
       // Investor 1 approves all tokens
       transaction = await token1
         .connect(investor1)
@@ -188,6 +195,170 @@ describe("AMM", () => {
       )
       expect(await token2.balanceOf(amm.address)).to.equal(
         await amm.token2Balance()
+      )
+
+      // Check price after swap
+      console.log(
+        `\nTLO Price: ${
+          (await amm.token2Balance()) / (await amm.token1Balance())
+        }\n`
+      )
+
+      //////////////////////////////////////////////////
+      // Investor1 Swaps Again
+
+      // Check investor1 token2 balance pre-swap for second time
+      balance = await token2.balanceOf(investor1.address)
+      console.log(
+        `\nInvestor1 token2 balance PRE-swap: ${ethers.utils.formatEther(
+          balance
+        )}\n`
+      )
+
+      // Estimate amount of tokens investor1 receives after swap - including slippage
+      estimate = await amm.calculateToken1Swap(tokens(1))
+      console.log(
+        `Token2 amount Investor1 will receive post-swap: ${estimate}\n`
+      )
+
+      // Investor1 swaps (1) token1
+      transaction = await amm.connect(investor1).swapToken1(tokens(1))
+      await transaction.wait()
+
+      // Check investor1 balance post-swap
+      balance = await token2.balanceOf(investor1.address)
+      console.log(
+        `\nInvestor1 token2 balance POST-swap: ${ethers.utils.formatEther(
+          balance
+        )}\n`
+      )
+
+      // Check that AMM balances are in sync
+      expect(await token1.balanceOf(amm.address)).to.equal(
+        await amm.token1Balance()
+      )
+      expect(await token2.balanceOf(amm.address)).to.equal(
+        await amm.token2Balance()
+      )
+
+      // Check price after swap
+      console.log(
+        `\nTLO Price: ${
+          (await amm.token2Balance()) / (await amm.token1Balance())
+        }\n`
+      )
+
+      //////////////////////////////////////////////////
+      // Investor1 Swaps Large Amount
+
+      // Check investor1 token2 balance pre-swap for second time
+      balance = await token2.balanceOf(investor1.address)
+      console.log(
+        `\nInvestor1 token2 balance PRE-swap: ${ethers.utils.formatEther(
+          balance
+        )}\n`
+      )
+
+      // Estimate amount of tokens investor1 receives after swap - including slippage
+      estimate = await amm.calculateToken1Swap(tokens(100))
+      console.log(
+        `Token2 amount Investor1 will receive post-swap: ${estimate}\n`
+      )
+
+      // Investor1 swaps (1) token1
+      transaction = await amm.connect(investor1).swapToken1(tokens(100))
+      await transaction.wait()
+
+      // Check investor1 balance post-swap
+      balance = await token2.balanceOf(investor1.address)
+      console.log(
+        `\nInvestor1 token2 balance POST-swap: ${ethers.utils.formatEther(
+          balance
+        )}\n`
+      )
+
+      // Check that AMM balances are in sync
+      expect(await token1.balanceOf(amm.address)).to.equal(
+        await amm.token1Balance()
+      )
+      expect(await token2.balanceOf(amm.address)).to.equal(
+        await amm.token2Balance()
+      )
+
+      // Check price after swap
+      console.log(
+        `\nTLO Price: ${
+          (await amm.token2Balance()) / (await amm.token1Balance())
+        }\n`
+      )
+
+      //////////////////////////////////////////////////
+      // Investor2 Swaps
+
+      // Investor2 approves all tokens
+      transaction = await token2
+        .connect(investor2)
+        .approve(amm.address, tokens(100000))
+      await transaction.wait()
+
+      // Check investor2 balance PRE-swap
+      balance = await token1.balanceOf(investor2.address)
+      console.log(
+        `\nInvestor2 token1 balance PRE-swap: ${ethers.utils.formatEther(
+          balance
+        )}\n`
+      )
+
+      // Estimate amount of tokens investor2 receives after swapping token2 - including slippage
+      estimate = await amm.calculateToken2Swap(tokens(1))
+      console.log(
+        `Token1 amount Investor2 will receive post-swap: ${estimate}\n`
+      )
+
+      // Investor2 swaps (1) token2
+      transaction = await amm.connect(investor2).swapToken2(tokens(1))
+      await transaction.wait()
+
+      // Check swap event
+      await expect(transaction)
+        .to.emit(amm, "Swap")
+        .withArgs(
+          investor2.address,
+          token2.address,
+          tokens(1),
+          token1.address,
+          estimate,
+          await amm.token1Balance(),
+          await amm.token2Balance(),
+          (
+            await ethers.provider.getBlock(
+              await ethers.provider.getBlockNumber()
+            )
+          ).timestamp
+        )
+
+      // Check investor2 balance post-swap
+      balance = await token1.balanceOf(investor2.address)
+      console.log(
+        `\nInvestor2 token1 balance POST-swap: ${ethers.utils.formatEther(
+          balance
+        )}\n`
+      )
+      expect(estimate).to.equal(balance)
+
+      // Check that AMM balances are in sync
+      expect(await token1.balanceOf(amm.address)).to.equal(
+        await amm.token1Balance()
+      )
+      expect(await token2.balanceOf(amm.address)).to.equal(
+        await amm.token2Balance()
+      )
+
+      // Check price after swap
+      console.log(
+        `\nTLO Price: ${
+          (await amm.token2Balance()) / (await amm.token1Balance())
+        }\n`
       )
     })
   })
