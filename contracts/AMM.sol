@@ -62,7 +62,7 @@ contract AMM {
             uint256 share1 = (totalShares * _token1Amount) / token1Balance;
             uint256 share2 = (totalShares * _token2Amount) / token2Balance;
             require(
-                (share1 / 1) * 10 ** 3 == (share2 / 1) * 10 ** 3,
+                (share1 / 10 ** 3) == (share2 / 10 ** 3),
                 "must provide equal weights for pairs"
             );
             share = share1;
@@ -194,5 +194,36 @@ contract AMM {
             token2Balance,
             block.timestamp
         );
+    }
+
+    // Calculate amount of tokens to withdraw
+    function calculateWithdrawAmount(
+        uint256 _share
+    ) public view returns (uint256 token1Amount, uint256 token2Amount) {
+        require(_share <= totalShares, "must be less than total shares");
+        token1Amount = (_share * token1Balance) / totalShares;
+        token2Amount = (_share * token2Balance) / totalShares;
+    }
+
+    // Remove liquidity from the pool
+    function removeLiquidity(
+        uint256 _share
+    ) external returns (uint256 token1Amount, uint256 token2Amount) {
+        require(
+            _share <= shares[msg.sender],
+            "withdrawal exceeds owned shares"
+        );
+
+        (token1Amount, token2Amount) = calculateWithdrawAmount(_share);
+
+        shares[msg.sender] -= _share;
+        totalShares -= _share;
+
+        token1Balance -= token1Amount;
+        token2Balance -= token2Amount;
+        K = token1Balance * token2Balance;
+
+        token1.transfer(msg.sender, token1Amount);
+        token2.transfer(msg.sender, token2Amount);
     }
 }
