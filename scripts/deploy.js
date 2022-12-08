@@ -1,27 +1,30 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
-const hre = require("hardhat");
+const hre = require("hardhat")
 
 async function main() {
-  const NAME = 'Dapp University'
-  const SYMBOL = 'DAPP'
-  const MAX_SUPPLY = '1000000'
+  // Deploy tokens
+  const Token = await hre.ethers.getContractFactory("Token")
 
-  // Deploy Token
-  const Token = await hre.ethers.getContractFactory('Token')
-  let token = await Token.deploy(NAME, SYMBOL, MAX_SUPPLY)
+  // Token 1
+  let blackHills = await Token.deploy("Black Hills Token", "BHT", "1000000")
+  await blackHills.deployed()
 
-  await token.deployed()
-  console.log(`Token deployed to: ${token.address}\n`)
+  console.log(`Black Hills Token deployed to: ${blackHills.address}\n`)
+
+  //Token 2
+  let fusd = await Token.deploy("fUSD Token", "fUSD", "1000000")
+  await fusd.deployed()
+
+  console.log(`fUSD Token deployed to: ${fusd.address}\n`)
+
+  // Deploy AMM
+  const AMM = await hre.ethers.getContractFactory("AMM")
+  let amm = await AMM.deploy(blackHills.address, fusd.address)
+  await amm.deployed()
+
+  console.log(`AMM contract deployed to: ${amm.address}\n`)
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+  console.error(error)
+  process.exitCode = 1
+})

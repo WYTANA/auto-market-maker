@@ -22,7 +22,7 @@ describe("AMM", () => {
 
     // Deploy tokens
     const Token = await ethers.getContractFactory("Token")
-    token1 = await Token.deploy(" TLO AMM Token", "AMM", "1000000") // One million
+    token1 = await Token.deploy("Black Hills Token", "BHT", "1000000") // One million
     token2 = await Token.deploy("fUSD Token", "fUSD", "1000000") // One million
 
     // Send tokens to LP
