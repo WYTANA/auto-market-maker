@@ -28,7 +28,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "htest": "hardhat test test/AMM.js",
-    "deploy/local": "hardhat run scripts/deploy.js --network localhost"
+    "deploy/local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy/seed": "hardhat run scripts/seed.js --network localhost"
   },
   "author": "tlorback@gmail.com",
   "license": "ISC",
