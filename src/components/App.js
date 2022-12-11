@@ -8,14 +8,13 @@ import Navigation from "./Navigation"
 import Loading from "./Loading"
 
 // Interactions
-import { loadProvider, loadNetwork, loadAccount } from "../store/interactions"
-import { chain } from "lodash"
-
-// ABIs: Import your contract ABIs here
-// import TOKEN_ABI from '../abis/Token.json'
-
-// Config: Import your network config here
-// import config from '../config.json';
+import {
+  loadProvider,
+  loadNetwork,
+  loadAccount,
+  loadTokens,
+  loadAMM,
+} from "../store/interactions"
 
 function App() {
   const dispatch = useDispatch()
@@ -29,6 +28,10 @@ function App() {
 
     // Fetch accounts
     await loadAccount(dispatch)
+
+    // Initiate contracts
+    await loadTokens(provider, chainId, dispatch)
+    await loadAMM(provider, chainId, dispatch)
   }
 
   useEffect(() => {
