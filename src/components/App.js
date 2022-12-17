@@ -25,7 +25,7 @@ function App() {
 
   const loadBlockchainData = async () => {
     // Initiate provider
-    const provider = await loadProvider(dispatch)
+    const provider = loadProvider(dispatch)
 
     // Fetch Chain Id
     const chainId = await loadNetwork(provider, dispatch)
